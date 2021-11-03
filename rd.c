@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/random.h>
+#include <sys/mman.h>
 #include <error.h>
+#include <errno.h>
 
 #define SZ1	64
 
@@ -75,6 +77,10 @@ int main(int argc, char **argv)
 	n = sz / SZ1;
 	p = malloc(sz);
 	pp = malloc(sz / 64 * sizeof(void *));
+
+	if (mlock(p, sz) < 0 ||
+	    mlock(pp, sz / 64 * sizeof(void *)) < 0)
+		error(1, errno, "failed to lock mem");
 
 	getrandom(p, sz, 0);
 
