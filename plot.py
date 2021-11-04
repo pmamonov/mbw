@@ -17,6 +17,7 @@ def genplot(log):
 	plt.xlabel("kB")
 
 	plt.ylabel("MB/s")
+	plt.ylim(bottom=0)
 
 	plt.grid()
 	plt.legend()
