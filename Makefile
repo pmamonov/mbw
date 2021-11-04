@@ -1,4 +1,6 @@
 LOG := $(shell hostname).log
+LOGALL := $(shell ls *.log)
+PNGALL := $(patsubst %.log,%.png,$(LOGALL))
 
 all: ${LOG}
 
@@ -13,3 +15,5 @@ rd: rd.c
 
 clean:
 	rm -f rd ${LOG}
+
+png: $(PNGALL)
