@@ -9,7 +9,7 @@ lbl = ("seq", "inv", "rnd")
 def genplot(log):
 	d = np.loadtxt(log)
 
-	for i in range(1,4):
+	for i in range(1, d.shape[1]):
 		plt.plot(d[:, 0], d[:, i], label=lbl[i - 1])
 
 	plt.xscale("log")
