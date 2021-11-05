@@ -4,7 +4,7 @@ import sys
 import matplotlib
 import numpy as np
 
-lbl = ("seq", "inv", "rnd")
+lbl = ("seq", "seq2", "seq4", "seq8", "inv", "rnd")
 
 def genplot(log):
 	d = np.loadtxt(log)

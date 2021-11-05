@@ -61,7 +61,7 @@ static void measure(fun_t f, void **p, unsigned long long sz)
 
 int main(int argc, char **argv)
 {
-	int i;
+	int i, nch;
 	unsigned long n;
 	unsigned long long sz;
 	void *p;
@@ -87,6 +87,12 @@ int main(int argc, char **argv)
 	for (i = 0; i < n; i++)
 		pp[i] = p + i * SZ1;
 	measure(rd, pp, sz);
+
+	for (nch = 2; nch <= 8; nch *= 2) {
+		for (i = 0; i < n; i++)
+			pp[i] = p + SZ1 * (n  / nch * (i % nch) + i / nch);
+		measure(rd, pp, sz);
+	}
 
 	for (i = 0; i < n; i++)
 		pp[i] = p + sz - (i + 1) * SZ1;
