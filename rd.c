@@ -37,6 +37,23 @@ static void rd(void **_p, int n)
 	}
 }
 
+static void wr(void **_p, int n)
+{
+	register volatile unsigned long long *p;
+	register int i;
+
+	for (i = 0, p = _p[0]; i < n; p = _p[++i]) {
+		p[0] = 0;
+		p[1] = 0;
+		p[2] = 0;
+		p[3] = 0;
+		p[4] = 0;
+		p[5] = 0;
+		p[6] = 0;
+		p[7] = 0;
+	}
+}
+
 static unsigned long __measure(fun_t f, void **p, unsigned long long sz, int n1, int ms, int report)
 {
 	int n = 0;
@@ -137,6 +154,12 @@ static struct test tests[] = {
 	{"rseq4", seq4, rd},
 	{"rseq8", seq8, rd},
 	{"rrnd", rnd, rd},
+	{"wseq", seq, wr},
+	{"winv", inv, wr},
+	{"wseq2", seq2, wr},
+	{"wseq4", seq4, wr},
+	{"wseq8", seq8, wr},
+	{"wrnd", rnd, wr},
 };
 
 int main(int argc, char **argv)
