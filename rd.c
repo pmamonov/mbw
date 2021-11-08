@@ -54,9 +54,9 @@ static unsigned long __measure(fun_t f, void **p, unsigned long long sz, int n1,
 
 static void measure(fun_t f, void **p, unsigned long long sz)
 {
-	unsigned long n1 = __measure(f, p, sz, 1, 100, 0);
+	unsigned long n1 = __measure(f, p, sz, 1, 50, 0);
 
-	__measure(f, p, sz, n1, 1000, 1);
+	__measure(f, p, sz, n1, 100, 1);
 }
 
 int main(int argc, char **argv)
