@@ -4,9 +4,9 @@ import sys
 import matplotlib
 import numpy as np
 
-lbl = ("seq", "seq2", "seq4", "seq8", "inv", "rnd")
-
 def genplot(log):
+	with open(log) as f:
+		lbl = f.readline().split()[2:]
 	d = np.loadtxt(log)
 
 	for i in range(1, d.shape[1]):

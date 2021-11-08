@@ -1,15 +1,24 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 #include <sys/random.h>
 #include <sys/mman.h>
 #include <error.h>
 #include <errno.h>
 
+#define ARRAY_SIZE(a)	(sizeof(a) / sizeof((a)[0]))
 #define SZ1	64
 
 typedef void (*fun_t)(void **, int);
+
+struct test {
+	unsigned char *name;
+	void (*t)(fun_t, void *, void **, unsigned long long);
+	fun_t f;
+};
+
 
 static void rd(void **_p, int n)
 {
@@ -59,22 +68,92 @@ static void measure(fun_t f, void **p, unsigned long long sz)
 	__measure(f, p, sz, n1, 100, 1);
 }
 
+static void seq(fun_t f, void *p, void **pp, unsigned long long sz)
+{
+	unsigned long  i, n = sz / SZ1;
+
+	for (i = 0; i < n; i++)
+		pp[i] = p + i * SZ1;
+	measure(f, pp, sz);
+}
+
+static void inv(fun_t f, void *p, void **pp, unsigned long long sz)
+{
+	unsigned long  i, n = sz / SZ1;
+
+	for (i = 0; i < n; i++)
+		pp[i] = p + sz - (i + 1) * SZ1;
+	measure(f, pp, sz);
+}
+
+static void seqn(fun_t f, void *p, void **pp, unsigned long long sz, int nch)
+{
+	unsigned long  i, n = sz / SZ1;
+
+	for (i = 0; i < n; i++)
+		pp[i] = p + SZ1 * (n  / nch * (i % nch) + i / nch);
+	measure(f, pp, sz);
+}
+
+static void seq2(fun_t f, void *p, void **pp, unsigned long long sz)
+{
+	seqn(f, p, pp, sz, 2);
+}
+
+static void seq4(fun_t f, void *p, void **pp, unsigned long long sz)
+{
+	seqn(f, p, pp, sz, 4);
+}
+
+static void seq8(fun_t f, void *p, void **pp, unsigned long long sz)
+{
+	seqn(f, p, pp, sz, 8);
+}
+
+static void rnd(fun_t f, void *p, void **pp, unsigned long long sz)
+{
+	unsigned long  i, n = sz / SZ1;
+
+	if (n > RAND_MAX)
+		error(1, 0, "n > RAND_MAX\n");
+
+	for (i = 0; i < n; i++)
+		pp[i] = p + i * SZ1;
+
+	for (i = 0; i < n; i++) {
+		int j = rand() % n;
+		void *_p = pp[i];
+
+		pp[i] = pp[j];
+		pp[j] = _p;
+	}
+	measure(f, pp, sz);
+}
+
+static struct test tests[] = {
+	{"rseq", seq, rd},
+	{"rinv", inv, rd},
+	{"rseq2", seq2, rd},
+	{"rseq4", seq4, rd},
+	{"rseq8", seq8, rd},
+	{"rrnd", rnd, rd},
+};
+
 int main(int argc, char **argv)
 {
-	int i, nch;
-	unsigned long n;
+	int i, j;
 	unsigned long long sz;
 	void *p;
 	void **pp;
 
-	if (argc < 2)
-		error(1, 0, "USAGE: %s size\n", argv[0]);
+	if (argc < 3)
+		error(1, 0, "USAGE: %s size test [test1] [test2] ...\n", argv[0]);
 
 	sz = strtoull(argv[1], NULL, 0) << 10;
 
-	printf("%llu ", sz >> 10);
+	if (!sz)
+		error(1, 0, "invalid size");
 
-	n = sz / SZ1;
 	p = malloc(sz);
 	pp = malloc(sz / 64 * sizeof(void *));
 
@@ -84,30 +163,20 @@ int main(int argc, char **argv)
 
 	getrandom(p, sz, 0);
 
-	for (i = 0; i < n; i++)
-		pp[i] = p + i * SZ1;
-	measure(rd, pp, sz);
+	printf("%llu ", sz >> 10);
 
-	for (nch = 2; nch <= 8; nch *= 2) {
-		for (i = 0; i < n; i++)
-			pp[i] = p + SZ1 * (n  / nch * (i % nch) + i / nch);
-		measure(rd, pp, sz);
+	for (j = 2; j < argc; j++) {
+		int found = 0;
+
+		for (i = 0; i < ARRAY_SIZE(tests); i++)
+			if (!strcmp(argv[j], tests[i].name)) {
+				found = 1;
+				tests[i].t(tests[i].f, p, pp, sz);
+			}
+		if (!found)
+			error(1, 0, "invalid test `%s`", argv[j]);
 	}
 
-	for (i = 0; i < n; i++)
-		pp[i] = p + sz - (i + 1) * SZ1;
-	measure(rd, pp, sz);
-
-	if (n > RAND_MAX)
-		error(1, 0, "n > RAND_MAX\n");
-	for (i = 0; i < n; i++) {
-		int j = rand() % n;
-		void *_p = pp[i];
-
-		pp[i] = pp[j];
-		pp[j] = _p;
-	}
-	measure(rd, pp, sz);
 
 	printf("\n");
 	return 0;
