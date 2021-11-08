@@ -2,7 +2,7 @@
 
 MAX=65536
 
-TESTS="rseq rseq2 rseq4 rseq8 rinv rrnd"
+TESTS="rseq rrnd wseq wrnd"
 
 echo "# sz $TESTS"
 
