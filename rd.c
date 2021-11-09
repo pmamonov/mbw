@@ -105,6 +105,14 @@ static int inv(fun_t f, void *p, void **pp, unsigned long long sz, int argc, cha
 	return 0;
 }
 
+static void pstr(void *p, void **pp, unsigned long n, unsigned long nch)
+{
+	int i;
+
+	for (i = 0; i < n; i++)
+		pp[i] = p + SZ1 * (n  / nch * (i % nch) + i / nch);
+}
+
 static int seqn(fun_t f, void *p, void **pp, unsigned long long sz, int argc, char **argv)
 {
 	unsigned long  i, n = sz / SZ1;
@@ -113,11 +121,24 @@ static int seqn(fun_t f, void *p, void **pp, unsigned long long sz, int argc, ch
 	if (argc < 2)
 		error(1, 0, "%s requires an argument", __func__);
 	nch = atoi(argv[1]);
-	for (i = 0; i < n; i++)
-		pp[i] = p + SZ1 * (n  / nch * (i % nch) + i / nch);
+	pstr(p, pp, n, nch);
 	measure(f, pp, sz);
 	return 1;
 }
+
+static int strn(fun_t f, void *p, void **pp, unsigned long long sz, int argc, char **argv)
+{
+	unsigned long  i, n = sz / SZ1;
+	int str = 2;
+
+	if (argc < 2)
+		error(1, 0, "%s requires an argument", __func__);
+	str = atoi(argv[1]);
+	pstr(p, pp, n, n / str);
+	measure(f, pp, sz);
+	return 1;
+}
+
 
 static int rnd(fun_t f, void *p, void **pp, unsigned long long sz, int argc, char **argv)
 {
@@ -144,10 +165,12 @@ static struct test tests[] = {
 	{"rseq", seq, rd},
 	{"rinv", inv, rd},
 	{"rseqn", seqn, rd},
+	{"rstrn", strn, rd},
 	{"rrnd", rnd, rd},
 	{"wseq", seq, wr},
 	{"winv", inv, wr},
 	{"wseqn", seqn, wr},
+	{"wstrn", strn, wr},
 	{"wrnd", rnd, wr},
 };
 
