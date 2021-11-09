@@ -15,7 +15,7 @@ typedef void (*fun_t)(void **, int);
 
 struct test {
 	unsigned char *name;
-	void (*t)(fun_t, void *, void **, unsigned long long);
+	int (*t)(fun_t, void *, void **, unsigned long long, int, char **);
 	fun_t f;
 };
 
@@ -85,49 +85,41 @@ static void measure(fun_t f, void **p, unsigned long long sz)
 	__measure(f, p, sz, n1, 100, 1);
 }
 
-static void seq(fun_t f, void *p, void **pp, unsigned long long sz)
+static int seq(fun_t f, void *p, void **pp, unsigned long long sz, int argc, char **argv)
 {
 	unsigned long  i, n = sz / SZ1;
 
 	for (i = 0; i < n; i++)
 		pp[i] = p + i * SZ1;
 	measure(f, pp, sz);
+	return 0;
 }
 
-static void inv(fun_t f, void *p, void **pp, unsigned long long sz)
+static int inv(fun_t f, void *p, void **pp, unsigned long long sz, int argc, char **argv)
 {
 	unsigned long  i, n = sz / SZ1;
 
 	for (i = 0; i < n; i++)
 		pp[i] = p + sz - (i + 1) * SZ1;
 	measure(f, pp, sz);
+	return 0;
 }
 
-static void seqn(fun_t f, void *p, void **pp, unsigned long long sz, int nch)
+static int seqn(fun_t f, void *p, void **pp, unsigned long long sz, int argc, char **argv)
 {
 	unsigned long  i, n = sz / SZ1;
+	int nch = 2;
 
+	if (argc < 2)
+		error(1, 0, "%s requires an argument", __func__);
+	nch = atoi(argv[1]);
 	for (i = 0; i < n; i++)
 		pp[i] = p + SZ1 * (n  / nch * (i % nch) + i / nch);
 	measure(f, pp, sz);
+	return 1;
 }
 
-static void seq2(fun_t f, void *p, void **pp, unsigned long long sz)
-{
-	seqn(f, p, pp, sz, 2);
-}
-
-static void seq4(fun_t f, void *p, void **pp, unsigned long long sz)
-{
-	seqn(f, p, pp, sz, 4);
-}
-
-static void seq8(fun_t f, void *p, void **pp, unsigned long long sz)
-{
-	seqn(f, p, pp, sz, 8);
-}
-
-static void rnd(fun_t f, void *p, void **pp, unsigned long long sz)
+static int rnd(fun_t f, void *p, void **pp, unsigned long long sz, int argc, char **argv)
 {
 	unsigned long  i, n = sz / SZ1;
 
@@ -145,20 +137,17 @@ static void rnd(fun_t f, void *p, void **pp, unsigned long long sz)
 		pp[j] = _p;
 	}
 	measure(f, pp, sz);
+	return 0;
 }
 
 static struct test tests[] = {
 	{"rseq", seq, rd},
 	{"rinv", inv, rd},
-	{"rseq2", seq2, rd},
-	{"rseq4", seq4, rd},
-	{"rseq8", seq8, rd},
+	{"rseqn", seqn, rd},
 	{"rrnd", rnd, rd},
 	{"wseq", seq, wr},
 	{"winv", inv, wr},
-	{"wseq2", seq2, wr},
-	{"wseq4", seq4, wr},
-	{"wseq8", seq8, wr},
+	{"wseqn", seqn, wr},
 	{"wrnd", rnd, wr},
 };
 
@@ -194,7 +183,9 @@ int main(int argc, char **argv)
 		for (i = 0; i < ARRAY_SIZE(tests); i++)
 			if (!strcmp(argv[j], tests[i].name)) {
 				found = 1;
-				tests[i].t(tests[i].f, p, pp, sz);
+				j += tests[i].t(tests[i].f, p, pp, sz,
+						argc - j, argv + j);
+				break;
 			}
 		if (!found)
 			error(1, 0, "invalid test `%s`", argv[j]);
