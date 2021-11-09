@@ -4,13 +4,13 @@ PNGALL := $(patsubst %.log,%.png,$(LOGALL))
 
 all: ${LOG}
 
-$(LOG): rd
+$(LOG): mbw
 	./memlad.sh | tee $@
 
 %.png: %.log
 	./plot.py $< $@
 
-rd: rd.c
+mbw: mbw.c
 	cc -o $@ $<
 
 clean:

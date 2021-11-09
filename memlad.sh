@@ -8,7 +8,7 @@ echo "# sz $TESTS"
 
 s=1
 while true; do
-	./rd $s $TESTS
+	./mbw $s $TESTS
 	s=$(($s * 2))
 	if [ $s -gt $MAX ]; then
 		break;
