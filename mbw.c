@@ -5,8 +5,18 @@
 #include <sys/time.h>
 #include <sys/random.h>
 #include <sys/mman.h>
-#include <error.h>
 #include <errno.h>
+
+#define error(e, r, ...)					\
+	do {							\
+		fprintf(stderr, "mbw: ");			\
+		fprintf(stderr, __VA_ARGS__);			\
+		if (r)						\
+			fprintf(stderr, ": %s", strerror(r));	\
+		fprintf(stderr, "\n");				\
+		if (e)						\
+			exit(e);				\
+	} while (0);
 
 #define ARRAY_SIZE(a)	(sizeof(a) / sizeof((a)[0]))
 #define SZ1	64
