@@ -11,7 +11,7 @@ $(LOG): mbw
 	./plot.py $< $@
 
 mbw: mbw.c
-	cc -o $@ $<
+	cc -O3 -o $@ $<
 
 clean:
 	rm -f mbw ${LOG}
