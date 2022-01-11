@@ -14,6 +14,6 @@ mbw: mbw.c
 	cc -o $@ $<
 
 clean:
-	rm -f rd ${LOG}
+	rm -f mbw ${LOG}
 
 png: $(PNGALL)
